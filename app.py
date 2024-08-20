@@ -53,7 +53,7 @@ summary_prompt = ChatPromptTemplate.from_messages([
 # Chat prompt template for question answering
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a highly capable AI language model, skilled at answering questions based on the content of research papers."),
-    ("human", "Here is the content of the research paper: {context}. Now, I have a question: {question}")
+    ("human", "Here is the content of the research paper: {context}. Now, I have a question: {input}")
 ])
 
 # Streamlit app
@@ -126,14 +126,19 @@ if uploaded_file is not None:
             except Exception as e:
                 st.error(f"Failed to create the summary file: {e}")
 
+    # Question Answering chain setup
+    qa_document_chain = create_stuff_documents_chain(llm, qa_prompt)
+    qa_retriever = st.session_state.vectors.as_retriever()
+    qa_retrieval_chain = create_retrieval_chain(qa_retriever,qa_document_chain)
+
     # Question Answering
     st.write("### Question Answering")
-    question = st.text_input("Enter your question:")
-    if question and st.button("Get Answer"):
+    input = st.text_input("Enter your question:")
+    print(input)
+    if input and st.button("Get Answer"):
         with st.spinner("Searching for the answer..."):
             try:
-                qa_chain = create_stuff_documents_chain(llm, qa_prompt)
-                qa_chain_response = qa_chain.invoke({"context": st.session_state.docs, "question": question})
+                qa_chain_response = qa_retrieval_chain.invoke({"context": st.session_state.docs, "input": input})
                 if not qa_chain_response:
                     st.error("Failed to retrieve an answer. Please try a different question.")
                 else:
