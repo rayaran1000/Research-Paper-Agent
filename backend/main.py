@@ -10,9 +10,22 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from dotenv import load_dotenv
+from pymongo import MongoClient
+
+from Logger import logger
 
 # Load environment variables
 load_dotenv()
+
+# MongoDB Connection 
+MONGODB_URI = os.getenv("MONGODB_URI")
+if not MONGODB_URI:
+    raise ValueError("MONGODB_URI not set in environment variables")
+
+# Sentiment Database used for storing summarization of papers
+client = MongoClient(MONGODB_URI)
+db = client.summary
+summary_collection = db.summarization
 
 # Load API keys
 groq_api_key = os.environ.get('GROQ_API_KEY')
@@ -87,7 +100,7 @@ if uploaded_file is not None:
 
         # Text splitting and vector storage
         st.session_state.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        st.session_state.final_documents = st.session_state.text_splitter.split_documents(st.session_state.docs[:10])
+        st.session_state.final_documents = st.session_state.text_splitter.split_documents(st.session_state.docs)
         st.session_state.embeddings = OllamaEmbeddings()
         st.session_state.vectors = FAISS.from_documents(st.session_state.final_documents, st.session_state.embeddings)
 
@@ -106,7 +119,11 @@ if uploaded_file is not None:
     if st.button("Summarize"):
         with st.spinner("Summarizing the document..."):
             try:
+                paper_name = st.text_input("Enter the paper name for storing the summary:")
                 summary = retrieval_chain.invoke({"context": st.session_state.docs, "input": "Give me summary"})
+                summary_doc = {paper_name:summary}
+                summary_collection.insert_one(summary_doc)
+                st.success("Summary stored successfully.")
                 if not summary:
                     st.error("The summarization process failed. Please try again.")
                 else:
