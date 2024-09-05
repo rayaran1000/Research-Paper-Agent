@@ -1,5 +1,7 @@
 # Research Paper Agent
 
+![image](https://github.com/user-attachments/assets/421dde28-106b-4c08-bf41-82112379cb7d)
+
 ## Overview
 The **Research Paper Agent** is a Generative AI tool designed to assist researchers, academics, and professionals by generating concise summaries of research papers and answering queries based on the document's content. 
 
@@ -72,7 +74,7 @@ git clone https://github.com/username/research-paper-agent.git
 
 ### Navigate into the project directory
 ```bash
-cd research-paper-agent
+cd backend
 ```
 
 ### Install the required dependencies
